@@ -1,6 +1,6 @@
 {
-  "last_scan": null,
-  "last_scan_note": "Seed data entered by hand. The daily scanner adds new items below with review set to pending.",
+  "last_scan": "2026-10-12T18:33:27+00:00",
+  "last_scan_note": "Checked 40 new items with claude:claude-sonnet-5-5; added 2 for review.",
   "rules": [
     {
       "id": "us-232-semis-2026",
@@ -11,14 +11,24 @@
       "review": "approved",
       "date": "2026-01-14",
       "effective": "2026-01-15",
-      "stages": ["gpu", "ld"],
-      "countries": ["Taiwan", "All exporters"],
+      "stages": [
+        "gpu",
+        "ld"
+      ],
+      "countries": [
+        "Taiwan",
+        "All exporters"
+      ],
       "summary": "A 25% tariff on certain advanced computing chips, including NVIDIA H200 and AMD MI325X class chips, when the import does not support the US technology buildout. Defined end uses are exempt.",
       "source_name": "EY Tax News",
       "source_url": "https://taxnews.ey.com/news/2026-0209-us-section-232-proclamation-imposes-25-percent-tariff-on-certain-semiconductors",
       "confidence": "high",
       "official": true,
-      "model_effect": {"input": "tariff", "value": 25, "note": "Applies to H200 and MI325X class chips unless exempt."}
+      "model_effect": {
+        "input": "tariff",
+        "value": 25,
+        "note": "Applies to H200 and MI325X class chips unless exempt."
+      }
     },
     {
       "id": "us-232-phase2",
@@ -29,14 +39,32 @@
       "review": "approved",
       "date": "2026-01-14",
       "effective": null,
-      "stages": ["gpu", "ld", "hb", "li", "de", "in", "cl", "tp"],
-      "countries": ["Taiwan", "Korea", "Japan", "All exporters"],
+      "stages": [
+        "gpu",
+        "ld",
+        "hb",
+        "li",
+        "de",
+        "in",
+        "cl",
+        "tp"
+      ],
+      "countries": [
+        "Taiwan",
+        "Korea",
+        "Japan",
+        "All exporters"
+      ],
       "summary": "The proclamation allows broader, significant tariffs on chips, chipmaking equipment, and derived products after negotiations, paired with a tariff offset for firms investing in US production. Taiwan, Korea, and Japan have framework deals that may reduce exposure.",
       "source_name": "Morgan Lewis",
       "source_url": "https://www.morganlewis.com/pubs/2026/02/section-232-investigations-prompt-trade-negotiation",
       "confidence": "high",
       "official": true,
-      "model_effect": {"input": "tariff", "value": null, "note": "Rate not set. Use the tariff slider to test values."}
+      "model_effect": {
+        "input": "tariff",
+        "value": null,
+        "note": "Rate not set. Use the tariff slider to test values."
+      }
     },
     {
       "id": "us-bis-h200-2026",
@@ -47,14 +75,23 @@
       "review": "approved",
       "date": "2026-01-13",
       "effective": "2026-01-15",
-      "stages": ["gpu", "ds"],
-      "countries": ["China"],
+      "stages": [
+        "gpu",
+        "ds"
+      ],
+      "countries": [
+        "China"
+      ],
       "summary": "Moves license review for H200 and MI325X class chips to China from presumption of denial to case by case, with a cap of 50% of US volume, third party testing in the US, and customer checks. Affects where chips can be sold more than what they cost.",
       "source_name": "CNAS",
       "source_url": "https://www.cnas.org/publications/commentary/cnas-insights-unpacking-the-h200-export-policy",
       "confidence": "high",
       "official": true,
-      "model_effect": {"input": "none", "value": null, "note": "Changes sales volume to China, not unit cost."}
+      "model_effect": {
+        "input": "none",
+        "value": null,
+        "note": "Changes sales volume to China, not unit cost."
+      }
     },
     {
       "id": "us-tools-controls",
@@ -65,14 +102,28 @@
       "review": "approved",
       "date": "2022-10-07",
       "effective": null,
-      "stages": ["li", "de", "in", "cl", "tp"],
-      "countries": ["China", "Netherlands", "Japan"],
+      "stages": [
+        "li",
+        "de",
+        "in",
+        "cl",
+        "tp"
+      ],
+      "countries": [
+        "China",
+        "Netherlands",
+        "Japan"
+      ],
       "summary": "Restricts sales of advanced lithography, deposition, etch, and inspection tools and their parts to China, with updates since 2022. Chinese tool makers have gained share in China as a result.",
       "source_name": "TechInsights",
       "source_url": "https://techinsights.com/blog/top-ic-manufacturing-equipment-suppliers-2025",
       "confidence": "medium",
       "official": false,
-      "model_effect": {"input": "none", "value": null, "note": "Limits China's capacity; little direct effect on GPU unit cost."}
+      "model_effect": {
+        "input": "none",
+        "value": null,
+        "note": "Limits China's capacity; little direct effect on GPU unit cost."
+      }
     },
     {
       "id": "cn-germanium-2024",
@@ -83,14 +134,23 @@
       "review": "approved",
       "date": "2024-12-03",
       "effective": "2024-12-03",
-      "stages": ["gg"],
-      "countries": ["China", "United States"],
+      "stages": [
+        "gg"
+      ],
+      "countries": [
+        "China",
+        "United States"
+      ],
       "summary": "China banned germanium exports to the United States in December 2024, after starting an export licensing program in 2023. China is the leading germanium producer.",
       "source_name": "USGS Mineral Commodity Summaries 2026",
       "source_url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-germanium.pdf",
       "confidence": "high",
       "official": true,
-      "model_effect": {"input": "mineral", "value": null, "note": "Indirect for GPUs. Price effect not yet sourced."}
+      "model_effect": {
+        "input": "mineral",
+        "value": null,
+        "note": "Indirect for GPUs. Price effect not yet sourced."
+      }
     },
     {
       "id": "cn-gallium-2025",
@@ -101,14 +161,23 @@
       "review": "approved",
       "date": "2025-11-01",
       "effective": null,
-      "stages": ["gg"],
-      "countries": ["China", "United States"],
+      "stages": [
+        "gg"
+      ],
+      "countries": [
+        "China",
+        "United States"
+      ],
       "summary": "China lifted its ban on gallium exports to the United States for one year in November 2025, after export controls began in August 2023. China produced 99% of primary low purity gallium in 2025. Watch for renewal around November 2026.",
       "source_name": "USGS Mineral Commodity Summaries 2026",
       "source_url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-gallium.pdf",
       "confidence": "high",
       "official": true,
-      "model_effect": {"input": "none", "value": null, "note": "Mainly affects power chips and optics, outside the GPU package."}
+      "model_effect": {
+        "input": "none",
+        "value": null,
+        "note": "Mainly affects power chips and optics, outside the GPU package."
+      }
     },
     {
       "id": "cn-rare-earths-2025",
@@ -119,14 +188,22 @@
       "review": "approved",
       "date": "2025-04-04",
       "effective": null,
-      "stages": ["re"],
-      "countries": ["China"],
+      "stages": [
+        "re"
+      ],
+      "countries": [
+        "China"
+      ],
       "summary": "China tightened rare earth export controls in April 2025, expanded them in October 2025, then suspended the October expansion for one year in November 2025. China produced about 69% of mined supply in 2025. Watch for renewal around November 2026.",
       "source_name": "USGS Mineral Commodity Summaries 2026",
       "source_url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-rare-earths.pdf",
       "confidence": "high",
       "official": true,
-      "model_effect": {"input": "mineral", "value": null, "note": "Reaches the GPU through polishing slurries and tool parts."}
+      "model_effect": {
+        "input": "mineral",
+        "value": null,
+        "note": "Reaches the GPU through polishing slurries and tool parts."
+      }
     },
     {
       "id": "cn-tungsten-2025",
@@ -137,14 +214,114 @@
       "review": "approved",
       "date": "2025-02-04",
       "effective": "2025-02-04",
-      "stages": ["w"],
-      "countries": ["China"],
+      "stages": [
+        "w"
+      ],
+      "countries": [
+        "China"
+      ],
       "summary": "China added export controls on selected tungsten items in February 2025. China mined about 67,000 of 85,000 tonnes in 2025. Western tungsten prices roughly doubled during 2025.",
       "source_name": "USGS Mineral Commodity Summaries 2026",
       "source_url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-tungsten.pdf",
       "confidence": "medium",
       "official": true,
-      "model_effect": {"input": "mineral", "value": 100, "note": "Price doubling, reported from USGS via a secondary source. Shows how small a mineral shock is at GPU level."}
+      "model_effect": {
+        "input": "mineral",
+        "value": 100,
+        "note": "Price doubling, reported from USGS via a secondary source. Shows how small a mineral shock is at GPU level."
+      }
+    },
+    {
+      "id": "NEWS-8a6d1f4227cc",
+      "title": "Semiconductor export controls: What chip smuggling reveals - I by IMD - I by IMD",
+      "jurisdiction": "Unclear",
+      "type": "export_control",
+      "status": "unknown",
+      "review": "pending",
+      "date": "2026-10-09",
+      "effective": null,
+      "stages": [
+        "ld"
+      ],
+      "countries": [],
+      "summary": "Semiconductor export controls: What chip smuggling reveals - I by IMD &nbsp;&nbsp; I by IMD",
+      "source_name": "I by IMD",
+      "source_url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPNC05NzUyemowSHJrZ2hzRXJ1dGh3aElQdnRxUUE4ejdoZmpvb1ZYb0NsOEdQYngzSlh4VzlreXhWdzFUVkRMLWJDQ2VjNXZyNG1mSC1Ha2tqNDF5S1NBYjlteE9pa2xhUDRpNE5KS3lkTV9HX0hJSFJYaldNMGFWNDlFbUpZalVnbmMwOVNnYkNnc0lvRGljUC11ckxENktCWmZBS0hRTVpDS0E?oc=5",
+      "confidence": "low",
+      "official": false,
+      "tagged_by": "keywords",
+      "found_on": "2026-10-12",
+      "model_effect": {
+        "input": "none",
+        "value": null,
+        "note": "Keyword tagger: check the source before modeling."
+      }
+    },
+    {
+      "id": "NEWS-7ef84b16e092",
+      "title": "EU and China reach trade understandings on hybrid cars, tariffs and rare earths - INSIGHT EU MONITORING",
+      "jurisdiction": "Unclear",
+      "type": "tariff",
+      "status": "unknown",
+      "review": "pending",
+      "date": "2026-10-09",
+      "effective": null,
+      "stages": [
+        "re"
+      ],
+      "countries": [],
+      "summary": "EU and China reach trade understandings on hybrid cars, tariffs and rare earths &nbsp;&nbsp; INSIGHT EU MONITORING",
+      "source_name": "INSIGHT EU MONITORING",
+      "source_url": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPZnUwODdwTy13UW9MM09xVmt3NVRDeTJ5UG9WbEpBN3VwZ2FJeEVnY2hEZlJIdnd1X2pBWW9JQUxKNWNMekxOTnU0UDZOYlZxNjlwVUIybVJzVnhvalhrc2g4bzlJV1JTWjNZMVBxdmNMYklBeDdUWS1YN0RmQTZzS2N3ZnpBSGJPZHh5a05za2V6VTVVbnZTWWlmSjRjRGJFN0NtLWM1QURKNU5Xa1Z2dmNOUzd3X0tCV1ZFNWVfd21wYmQxYkI0VDVHelc4amR5OFlhZkYwS3lWR3Q5Nnc?oc=5",
+      "confidence": "low",
+      "official": false,
+      "tagged_by": "keywords",
+      "found_on": "2026-10-12",
+      "model_effect": {
+        "input": "none",
+        "value": null,
+        "note": "Keyword tagger: check the source before modeling."
+      }
     }
+  ],
+  "dismissed": [
+    "FR-2026-20773",
+    "FR-2026-20716",
+    "FR-2026-20776",
+    "FR-2026-20775",
+    "FR-2026-20389",
+    "FR-2026-20255",
+    "FR-2026-20254",
+    "FR-2026-20253",
+    "NEWS-6f70ae3d0959",
+    "NEWS-06605fa81a66",
+    "NEWS-8fe1fb234936",
+    "NEWS-e5e5ec0da633",
+    "NEWS-4ee9575e11c4",
+    "NEWS-6fab64dd4467",
+    "NEWS-2004a0551a43",
+    "NEWS-6245ac166c3f",
+    "NEWS-ae1559f8bf15",
+    "NEWS-83602b5941e7",
+    "NEWS-5ce82630d257",
+    "NEWS-63fd035ca42b",
+    "NEWS-a13f736e07c1",
+    "NEWS-25be3e423b86",
+    "NEWS-c6908be8f5a0",
+    "NEWS-42825f27a178",
+    "NEWS-c1bc8541f9a2",
+    "NEWS-c69c622825ad",
+    "NEWS-857314f83c48",
+    "NEWS-a0bb0d60f2d8",
+    "NEWS-c048d433db23",
+    "NEWS-2a9e974ea1ff",
+    "NEWS-7b3df6d46506",
+    "NEWS-a1419e12ec73",
+    "NEWS-ff461026ffb0",
+    "NEWS-e33b19d69b17",
+    "NEWS-239077caa495",
+    "NEWS-566e49789d95",
+    "NEWS-d827a9ad4027",
+    "NEWS-5ad47ad0ba44"
   ]
 }
