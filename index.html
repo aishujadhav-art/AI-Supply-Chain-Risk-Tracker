@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Maps the AI GPU supply chain, tracks rules that affect it, and estimates their cost impact.">
+<title>AI Supply Chain Risk Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: dashboard. Summary strip, then four tabs: supply chain map, rule tracker, cost impact model, method. */
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --surface2:#E9EDF1; --line:#CDD4DC; --ink:#14202E; --muted:#556171;
+  --edge:#A9B4C0; --accent:#0B6E78; --accent-soft:#D7EEF0;
+  --cn:#B4233C; --cn-soft:#F8DDE2; --ec:#4338A8; --ec-soft:#E3E1F7; --tf:#9A5B00; --tf-soft:#FBEBCF;
+  --good:#1F7A3A; --warn:#9A5B00;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F151C; --surface:#16202A; --surface2:#1C2834; --line:#2C3A48; --ink:#E5ECF2; --muted:#9AA8B6;
+  --edge:#3E5062; --accent:#4CC3CD; --accent-soft:#123A3F;
+  --cn:#F07A8E; --cn-soft:#3A1820; --ec:#A49CF0; --ec-soft:#242046; --tf:#E8B04F; --tf-soft:#3A2A0C;
+  --good:#6FCB88; --warn:#E8B04F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --surface:#16202A; --surface2:#1C2834; --line:#2C3A48; --ink:#E5ECF2; --muted:#9AA8B6;
+  --edge:#3E5062; --accent:#4CC3CD; --accent-soft:#123A3F;
+  --cn:#F07A8E; --cn-soft:#3A1820; --ec:#A49CF0; --ec-soft:#242046; --tf:#E8B04F; --tf-soft:#3A2A0C;
+  --good:#6FCB88; --warn:#E8B04F; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:0 56px;margin:0}
+.wrap{max-width:1280px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(26px,3.8vw,36px);font-weight:800}
+h2{font-size:clamp(20px,2.6vw,24px);font-weight:700}
+h3{font-size:18px;font-weight:700}
+p{margin:0;max-width:74ch}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.note{font-size:13.5px;color:var(--muted)}
+header{padding-block:28px 16px;display:grid;gap:10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:6px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:grid;gap:2px}
+.kpi b{font-family:var(--display);font-size:24px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.kpi.warn b{color:var(--warn)}
+nav.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);margin-top:18px}
+nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;cursor:pointer;font-weight:500;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabpanel{padding-top:18px;display:grid;gap:14px}
+.pill{display:inline-flex;align-items:center;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;font-weight:500;white-space:nowrap}
+.p-cn{background:var(--cn-soft);color:var(--cn)} .p-ec{background:var(--ec-soft);color:var(--ec)} .p-tf{background:var(--tf-soft);color:var(--tf)}
+.p-none{background:var(--surface2);color:var(--muted)} .p-pend{background:var(--tf-soft);color:var(--tf)} .p-ok{background:var(--accent-soft);color:var(--accent)}
+.chip{font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--surface2)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+/* map */
+.canvas{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+.canvas svg{display:block;min-width:1250px}
+.node{cursor:pointer}
+.node rect.body{fill:var(--surface2);stroke:var(--line);stroke-width:1}
+.node .t{font-family:var(--body);font-weight:600;font-size:13px;fill:var(--ink)}
+.node .s{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.node.sel rect.body{stroke:var(--accent);stroke-width:2.5;fill:var(--accent-soft)}
+.node.dim{opacity:.28}
+.colh{font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;fill:var(--muted)}
+.edge{fill:none;stroke:var(--edge);stroke-width:1.2}
+.edge.ind{stroke-dasharray:4 4}
+.edge.lit{stroke:var(--accent);stroke-width:2.2}
+.edge.dim{opacity:.12}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:12px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.pgrid>div{min-width:0;display:grid;gap:6px;align-content:start}
+.k{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+/* rules */
+.rules{display:grid;gap:10px}
+.rule{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c,var(--line));border-radius:0 8px 8px 0;padding:14px 16px;display:grid;gap:8px}
+.rule.pending{border-style:dashed;border-left-style:solid}
+.rule-top{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:baseline}
+.rule h3{font-size:16.5px}
+.meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.stages{display:flex;flex-wrap:wrap;gap:4px}
+.stg{font-size:12px;background:var(--surface2);border-radius:4px;padding:1px 7px}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--surface);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13.5px;font-weight:500}
+.btn.ghost{background:transparent;color:var(--accent)}
+/* cost */
+.cost{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
+@media (max-width:860px){.cost{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
+.field{display:grid;gap:4px}
+.field label{font-size:13.5px;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--mono);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=number],select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.shares{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.check{display:flex;gap:8px;align-items:center;font-size:13.5px}
+.big{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.big div{background:var(--surface2);border-radius:8px;padding:10px 12px;display:grid}
+.big b{font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+.big span{font-size:12px;color:var(--muted)}
+.bars{display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:150px 1fr 90px;gap:10px;align-items:center;font-size:13px}
+.bar .t{height:12px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.bar .t i{display:block;height:100%;background:var(--accent)}
+.bar .t i.tf{background:var(--tf)}
+.bar .v{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:520px){.bar{grid-template-columns:100px 1fr 70px}}
+.warnbox{font-size:13px;border-left:3px solid var(--tf);background:var(--tf-soft);padding:6px 10px}
+.method{display:grid;gap:14px;max-width:820px}
+.method ol,.method ul{margin:0;padding-left:20px;display:grid;gap:4px}
+code{font-family:var(--mono);font-size:13px;background:var(--surface2);padding:1px 5px;border-radius:4px}
+footer{margin-top:32px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="eyebrow">AI GPU supply chain · regulatory risk · version one</span>
+  <h1>AI Supply Chain Risk Tracker</h1>
+  <p class="note">Maps the supply chain behind AI GPUs, tracks the rules that hit it, and estimates how each rule moves the cost of a GPU. Regulatory risk first; environmental risk comes next.</p>
+  <div class="kpis" id="kpis"></div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="t-map" aria-controls="v-map" aria-selected="true">Supply chain map</button>
+  <button role="tab" id="t-rules" aria-controls="v-rules" aria-selected="false">Rule tracker</button>
+  <button role="tab" id="t-cost" aria-controls="v-cost" aria-selected="false">Cost impact</button>
+  <button role="tab" id="t-method" aria-controls="v-method" aria-selected="false">Method and sources</button>
+</nav>
+
+<section class="tabpanel" id="v-map" role="tabpanel" aria-labelledby="t-map">
+  <div class="row" role="group" aria-label="Highlight rule exposure">
+    <span class="note">Show stages hit by tracked rules:</span>
+    <button class="chip" data-rule="cn" aria-pressed="false"><i style="background:var(--cn)"></i>China mineral controls</button>
+    <button class="chip" data-rule="ec" aria-pressed="false"><i style="background:var(--ec)"></i>US export controls</button>
+    <button class="chip" data-rule="tf" aria-pressed="false"><i style="background:var(--tf)"></i>US tariffs</button>
+    <button class="chip" data-rule="" aria-pressed="false">Clear</button>
+  </div>
+  <div class="canvas" id="canvas" aria-label="GPU supply chain flow diagram"></div>
+  <p class="note">Flows left to right from raw materials to the finished GPU. Select a box to light up what feeds it and what it feeds. Colored squares show which tracked rules hit that stage. Dashed lines are indirect links. Scroll sideways on a phone.</p>
+  <div class="panel" id="mpanel" aria-live="polite"></div>
+</section>
+
+<section class="tabpanel" id="v-rules" role="tabpanel" aria-labelledby="t-rules" hidden>
+  <div class="row" role="group" aria-label="Filter rules">
+    <button class="chip rf" data-f="all" aria-pressed="true">All</button>
+    <button class="chip rf" data-f="tariff" aria-pressed="false"><i style="background:var(--tf)"></i>Tariffs</button>
+    <button class="chip rf" data-f="export_control" aria-pressed="false"><i style="background:var(--ec)"></i>Export controls</button>
+    <button class="chip rf" data-f="mineral_control" aria-pressed="false"><i style="background:var(--cn)"></i>Mineral controls</button>
+  </div>
+  <div id="pendingWrap" hidden>
+    <h2>New from the scanner, needs review</h2>
+    <p class="note">Found and tagged automatically. They do not change the map or the cost model until you set <code>"review": "approved"</code> in <code>data/rules.json</code>.</p>
+    <div class="rules" id="pending" style="margin-top:10px"></div>
+  </div>
+  <h2>Tracked rules</h2>
+  <div class="rules" id="approved"></div>
+</section>
+
+<section class="tabpanel" id="v-cost" role="tabpanel" aria-labelledby="t-cost" hidden>
+  <p class="note" id="scenarioLabel">Example scenario: the Section 232 tariff applied to an H200. Change any input to test your own.</p>
+  <div class="cost">
+    <div class="card">
+      <h3>Inputs</h3>
+      <div class="two">
+        <div class="field"><label for="gpu">Reference GPU</label>
+          <select id="gpu"><option value="H200">NVIDIA H200</option><option value="B200">NVIDIA B200</option><option value="MI325X">AMD MI325X</option></select></div>
+        <div class="field"><label for="price">GPU price, USD</label><input type="number" id="price" min="1000" step="500"></div>
+      </div>
+      <div class="field"><label for="margin">Maker's gross margin <output id="o-margin"></output></label><input type="range" id="margin" min="30" max="85" step="1"></div>
+      <div>
+        <span class="k">Manufacturing cost split, % (assumptions)</span>
+        <div class="shares" style="margin-top:6px">
+          <div class="field"><label for="s-hbm">HBM</label><input type="number" id="s-hbm" min="0" max="100"></div>
+          <div class="field"><label for="s-logic">Logic die</label><input type="number" id="s-logic" min="0" max="100"></div>
+          <div class="field"><label for="s-pack">Packaging</label><input type="number" id="s-pack" min="0" max="100"></div>
+          <div class="field"><label for="s-sub">Substrate</label><input type="number" id="s-sub" min="0" max="100"></div>
+          <div class="field"><label for="s-other">Test, other</label><input type="number" id="s-other" min="0" max="100"></div>
+        </div>
+        <p class="warnbox" id="shareWarn" hidden></p>
+      </div>
+      <span class="k">Scenario: what changes</span>
+      <div class="field"><label for="tariff">Tariff on GPU import <output id="o-tariff"></output></label><input type="range" id="tariff" min="0" max="100" step="1"></div>
+      <label class="check"><input type="checkbox" id="applies"> Tariff applies to this purchase (not exempt for the US buildout)</label>
+      <div class="field"><label for="x-hbm">HBM price change <output id="o-x-hbm"></output></label><input type="range" id="x-hbm" min="-50" max="150" step="1"></div>
+      <div class="field"><label for="x-logic">Logic die (wafer) price change <output id="o-x-logic"></output></label><input type="range" id="x-logic" min="-50" max="150" step="1"></div>
+      <div class="field"><label for="x-pack">Packaging (CoWoS) price change <output id="o-x-pack"></output></label><input type="range" id="x-pack" min="-50" max="150" step="1"></div>
+      <div class="field"><label for="x-sub">Substrate and ABF price change <output id="o-x-sub"></output></label><input type="range" id="x-sub" min="-50" max="150" step="1"></div>
+      <div class="field"><label for="x-min">Critical mineral price change <output id="o-x-min"></output></label><input type="range" id="x-min" min="-50" max="300" step="5"></div>
+      <div class="field"><label for="pass">Share of cost increase passed to buyers <output id="o-pass"></output></label><input type="range" id="pass" min="0" max="100" step="5"></div>
+      <button class="btn ghost" id="reset">Reset scenario to zero</button>
+    </div>
+    <div class="card" aria-live="polite">
+      <h3>Estimated impact</h3>
+      <div class="big" id="big"></div>
+      <span class="k">What drives the change, per GPU</span>
+      <div class="bars" id="bars"></div>
+      <span class="k">Baseline manufacturing cost, per GPU</span>
+      <div class="bars" id="basebars"></div>
+      <p class="note">Estimates show direction and relative size, not exact amounts. Chip contract prices are private. Cost splits are illustrative assumptions to replace with sourced figures. See Method.</p>
+    </div>
+  </div>
+</section>
+
+<section class="tabpanel" id="v-method" role="tabpanel" aria-labelledby="t-method" hidden>
+  <div class="method">
+    <h2>How it works</h2>
+    <ol>
+      <li><b>Scan.</b> Every weekday a script checks the Federal Register (where US rules are published) and recent news for terms like semiconductor, advanced computing, gallium, germanium, rare earth, tungsten, and Section 232.</li>
+      <li><b>Tag.</b> An LLM (Claude) reads each item and fills a fixed form: rule type, status, dates, countries, which stages of the map it hits, key numbers such as a tariff rate, a summary, and a confidence level. Without an API key, a simple keyword tagger runs instead.</li>
+      <li><b>Review.</b> New items arrive as pending. A person approves them before they affect the map or the cost model, because an LLM can misread a rule.</li>
+      <li><b>Model.</b> The cost model is plain code, not the LLM. It splits the GPU's manufacturing cost into HBM, logic die, packaging, substrate, and other; applies the scenario's price changes; passes a chosen share to the buyer; then adds any tariff on the import value.</li>
+    </ol>
+    <h3>The cost formula</h3>
+    <p>Manufacturing cost = price × (1 − gross margin). Each component's cost = manufacturing cost × its share. Mineral shocks reach the GPU through logic die and HBM inputs, assumed at 3% of their cost. New price = price + (sum of component cost changes × pass through) + tariff × that price, if the tariff applies.</p>
+    <h3>Key assumptions to replace during review</h3>
+    <ul>
+      <li>GPU prices are rough public estimates (NVIDIA said in 2024 a Blackwell GPU would cost $30,000 to $40,000). The MI325X price is a placeholder.</li>
+      <li>Gross margin default uses NVIDIA's fiscal 2026 GAAP gross margin of 71.1%.</li>
+      <li>The cost split (HBM 50%, logic die 18%, packaging 17%, substrate 5%, other 10%) is an illustrative starting point, not a sourced figure.</li>
+      <li>The tariff is applied to the GPU price as a stand in for its customs value.</li>
+    </ul>
+    <h3>Sources</h3>
+    <ul>
+      <li><a href="https://www.sec.gov/Archives/edgar/data/1045810/000104581026000019/q4fy26pr.htm">NVIDIA fiscal 2026 results (SEC)</a></li>
+      <li><a href="https://taxnews.ey.com/news/2026-0209-us-section-232-proclamation-imposes-25-percent-tariff-on-certain-semiconductors">EY: Section 232 tariff on semiconductors</a></li>
+      <li><a href="https://www.cnas.org/publications/commentary/cnas-insights-unpacking-the-h200-export-policy">CNAS: H200 export policy</a></li>
+      <li><a href="https://epoch.ai/data-insights/ai-chip-supply-chain-constraints">Epoch AI: AI chip supply chain constraints</a></li>
+      <li><a href="https://www.trendforce.com/presscenter/news/20260909-13225.html">TrendForce: foundry market share 2Q26</a></li>
+      <li><a href="https://counterpointresearch.com/insights/global-dram-and-hbm-market-share">Counterpoint: HBM market share</a></li>
+      <li><a href="https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-tungsten.pdf">USGS Mineral Commodity Summaries 2026</a></li>
+      <li><a href="https://3dfabric.tsmc.com/english/dedicatedFoundry/technology/cowos.htm">TSMC: CoWoS</a></li>
+    </ul>
+    <h3>Coming next</h3>
+    <p>Environmental risk for each stage: energy, water, and emissions in chip fabrication and memory production, and the footprint of the minerals behind them.</p>
+  </div>
+</section>
+
+<footer>Personal project. Not financial or legal advice. Every rule links to its source; check the source before relying on it.</footer>
+</div>
+
+<script>
+const SEED = {"last_scan": null, "last_scan_note": "Seed data entered by hand. The daily scanner adds new items below with review set to pending.", "rules": [{"id": "us-232-semis-2026", "title": "Section 232 tariff on advanced computing chips", "jurisdiction": "United States", "type": "tariff", "status": "in_effect", "review": "approved", "date": "2026-01-14", "effective": "2026-01-15", "stages": ["gpu", "ld"], "countries": ["Taiwan", "All exporters"], "summary": "A 25% tariff on certain advanced computing chips, including NVIDIA H200 and AMD MI325X class chips, when the import does not support the US technology buildout. Defined end uses are exempt.", "source_name": "EY Tax News", "source_url": "https://taxnews.ey.com/news/2026-0209-us-section-232-proclamation-imposes-25-percent-tariff-on-certain-semiconductors", "confidence": "high", "official": true, "model_effect": {"input": "tariff", "value": 25, "note": "Applies to H200 and MI325X class chips unless exempt."}}, {"id": "us-232-phase2", "title": "Section 232 phase two: broader semiconductor tariffs", "jurisdiction": "United States", "type": "tariff", "status": "announced", "review": "approved", "date": "2026-01-14", "effective": null, "stages": ["gpu", "ld", "hb", "li", "de", "in", "cl", "tp"], "countries": ["Taiwan", "Korea", "Japan", "All exporters"], "summary": "The proclamation allows broader, significant tariffs on chips, chipmaking equipment, and derived products after negotiations, paired with a tariff offset for firms investing in US production. Taiwan, Korea, and Japan have framework deals that may reduce exposure.", "source_name": "Morgan Lewis", "source_url": "https://www.morganlewis.com/pubs/2026/02/section-232-investigations-prompt-trade-negotiation", "confidence": "high", "official": true, "model_effect": {"input": "tariff", "value": null, "note": "Rate not set. Use the tariff slider to test values."}}, {"id": "us-bis-h200-2026", "title": "BIS license review for H200 and MI325X class chips to China", "jurisdiction": "United States", "type": "export_control", "status": "in_effect", "review": "approved", "date": "2026-01-13", "effective": "2026-01-15", "stages": ["gpu", "ds"], "countries": ["China"], "summary": "Moves license review for H200 and MI325X class chips to China from presumption of denial to case by case, with a cap of 50% of US volume, third party testing in the US, and customer checks. Affects where chips can be sold more than what they cost.", "source_name": "CNAS", "source_url": "https://www.cnas.org/publications/commentary/cnas-insights-unpacking-the-h200-export-policy", "confidence": "high", "official": true, "model_effect": {"input": "none", "value": null, "note": "Changes sales volume to China, not unit cost."}}, {"id": "us-tools-controls", "title": "US export controls on advanced chipmaking equipment to China", "jurisdiction": "United States", "type": "export_control", "status": "in_effect", "review": "approved", "date": "2022-10-07", "effective": null, "stages": ["li", "de", "in", "cl", "tp"], "countries": ["China", "Netherlands", "Japan"], "summary": "Restricts sales of advanced lithography, deposition, etch, and inspection tools and their parts to China, with updates since 2022. Chinese tool makers have gained share in China as a result.", "source_name": "TechInsights", "source_url": "https://techinsights.com/blog/top-ic-manufacturing-equipment-suppliers-2025", "confidence": "medium", "official": false, "model_effect": {"input": "none", "value": null, "note": "Limits China's capacity; little direct effect on GPU unit cost."}}, {"id": "cn-germanium-2024", "title": "China ban on germanium exports to the US", "jurisdiction": "China", "type": "mineral_control", "status": "in_effect", "review": "approved", "date": "2024-12-03", "effective": "2024-12-03", "stages": ["gg"], "countries": ["China", "United States"], "summary": "China banned germanium exports to the United States in December 2024, after starting an export licensing program in 2023. China is the leading germanium producer.", "source_name": "USGS Mineral Commodity Summaries 2026", "source_url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-germanium.pdf", "confidence": "high", "official": true, "model_effect": {"input": "mineral", "value": null, "note": "Indirect for GPUs. Price effect not yet sourced."}}, {"id": "cn-gallium-2025", "title": "China gallium export ban to the US lifted for one year", "jurisdiction": "China", "type": "mineral_control", "status": "suspended", "review": "approved", "date": "2025-11-01", "effective": null, "stages": ["gg"], "countries": ["China", "United States"], "summary": "China lifted its ban on gallium exports to the United States for one year in November 2025, after export controls began in August 2023. China produced 99% of primary low purity gallium in 2025. Watch for renewal around November 2026.", "source_name": "USGS Mineral Commodity Summaries 2026", "source_url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-gallium.pdf", "confidence": "high", "official": true, "model_effect": {"input": "none", "value": null, "note": "Mainly affects power chips and optics, outside the GPU package."}}, {"id": "cn-rare-earths-2025", "title": "China rare earth export controls (October 2025 expansion suspended)", "jurisdiction": "China", "type": "mineral_control", "status": "suspended", "review": "approved", "date": "2025-04-04", "effective": null, "stages": ["re"], "countries": ["China"], "summary": "China tightened rare earth export controls in April 2025, expanded them in October 2025, then suspended the October expansion for one year in November 2025. China produced about 69% of mined supply in 2025. Watch for renewal around November 2026.", "source_name": "USGS Mineral Commodity Summaries 2026", "source_url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-rare-earths.pdf", "confidence": "high", "official": true, "model_effect": {"input": "mineral", "value": null, "note": "Reaches the GPU through polishing slurries and tool parts."}}, {"id": "cn-tungsten-2025", "title": "China export controls on tungsten items", "jurisdiction": "China", "type": "mineral_control", "status": "in_effect", "review": "approved", "date": "2025-02-04", "effective": "2025-02-04", "stages": ["w"], "countries": ["China"], "summary": "China added export controls on selected tungsten items in February 2025. China mined about 67,000 of 85,000 tonnes in 2025. Western tungsten prices roughly doubled during 2025.", "source_name": "USGS Mineral Commodity Summaries 2026", "source_url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-tungsten.pdf", "confidence": "medium", "official": true, "model_effect": {"input": "mineral", "value": 100, "note": "Price doubling, reported from USGS via a secondary source. Shows how small a mineral shock is at GPU level."}}]};
+const TYPE = {tariff:{tag:"tf",label:"Tariff"},export_control:{tag:"ec",label:"Export control"},mineral_control:{tag:"cn",label:"Mineral control"},other:{tag:"none",label:"Other"}};
+const STATUS = {in_effect:"In effect",final:"Final",proposed:"Proposed",announced:"Announced",suspended:"Suspended",unknown:"Status unclear"};
+const COLS=["Raw materials","Materials and parts","Tools and design","Chip making","Packaging","Finished GPU"];
+const CX=[20,228,436,644,852,1060], W=168, H=56, ROW=68, TOP=52;
+const N=[
+ {id:"si",c:0,r:0,name:"Silicon",sub:"US, Germany, Japan",st:7,what:"High purity quartz refined into polysilicon, then grown into crystal for wafers.",who:"Sibelco, The Quartz Corp (quartz); Wacker, Hemlock, Tokuyama (polysilicon)",where:"Quartz: US. Polysilicon: Germany, US, Japan, China."},
+ {id:"ne",c:0,r:1,name:"Neon, noble gases",sub:"Ukraine, Russia, China",st:7,what:"Gases used in the lasers that light lithography tools.",who:"Specialty gas purifiers",where:"Historically Ukraine and Russia; since diversified. To verify."},
+ {id:"gg",c:0,r:2,name:"Gallium, germanium",sub:"China dominant",st:7,what:"Germanium is used as germane gas in advanced transistors. Gallium matters more for power chips and optics.",who:"Chinese refiners; Umicore, Teck for germanium",where:"China produced 99% of primary gallium in 2025 and leads germanium."},
+ {id:"w",c:0,r:3,name:"Tungsten",sub:"China ~79%",st:7,what:"Forms the tiny metal contacts inside chips, deposited from tungsten gas; also used in tool parts.",who:"Xiamen Tungsten (China), Masan High Tech Materials (Vietnam)",where:"China mined 67,000 of 85,000 tonnes in 2025."},
+ {id:"re",c:0,r:4,name:"Rare earths",sub:"China ~69% mining",st:7,what:"Cerium oxide polishes wafers flat; rare earth magnets drive motors and pumps in tools.",who:"China Northern Rare Earth, China Rare Earth Group, MP Materials, Lynas",where:"China: about 69% of mining in 2025 and more of refining."},
+ {id:"ta",c:0,r:5,name:"Tantalum",sub:"Central Africa, Brazil",st:7,what:"Thin barrier layers that keep copper wiring from leaking into the chip.",who:"Global Advanced Metals and others",where:"Mostly Congo, Rwanda, Brazil. To verify."},
+ {id:"cu",c:0,r:6,name:"Copper",sub:"Chile, Peru, DRC",st:7,what:"Wiring layers inside chips and circuits in substrates.",who:"Codelco, Freeport, BHP",where:"Mining: Chile, Peru, Congo. Refining: China leads."},
+ {id:"wf",c:1,r:0,name:"Silicon wafers",sub:"Japan, Taiwan, Korea",st:6,what:"Thin polished 300mm silicon discs that chips are built on.",who:"Shin Etsu, SUMCO, GlobalWafers, Siltronic, SK Siltron",where:"These five supply about 90% of 300mm wafers."},
+ {id:"gs",c:1,r:1,name:"Specialty gases",sub:"France, US, Japan, Korea",st:6,what:"Ultra pure gases for etching, deposition, and lasers.",who:"Air Liquide, Linde, Air Products, Japanese and Korean specialists",where:"Produced near fabs in Taiwan, Korea, Japan, US."},
+ {id:"pr",c:1,r:2,name:"Photoresists",sub:"Japan dominant",st:6,what:"Light sensitive coatings that record the circuit pattern.",who:"JSR, Tokyo Ohka, Shin Etsu, Sumitomo Chemical",where:"Mostly Japan. Japan restricted resist exports to Korea in 2019."},
+ {id:"ch",c:1,r:3,name:"Chemicals, slurries",sub:"US, Germany, Japan",st:6,what:"Wet chemicals, polishing slurries, and filters.",who:"Entegris, Merck KGaA, Fujifilm",where:"US, Europe, Japan."},
+ {id:"tg",c:1,r:4,name:"Sputter targets",sub:"Japan, US",st:6,what:"Blocks of ultra pure metal vaporized to lay down metal layers.",who:"JX Advanced Metals, Honeywell, Materion, Tosoh",where:"Japan and US. To verify."},
+ {id:"tp",c:1,r:5,name:"Tool components",sub:"Germany, US, Japan",st:5,what:"Optics, lasers, vacuum parts, robots, and ceramics inside chipmaking tools.",who:"Zeiss SMT, Trumpf, Cymer, MKS, VAT Group, Pfeiffer Vacuum, Brooks, Toto",where:"Germany, US, Switzerland, Japan."},
+ {id:"abf",c:1,r:6,name:"ABF film",sub:"Japan, Ajinomoto",st:4,what:"Insulating film used to build substrate layers.",who:"Ajinomoto",where:"Japan; over 95% of high end supply."},
+ {id:"eda",c:1,r:7,name:"Design software, IP",sub:"US, UK",st:5,what:"Chip design software and licensed circuit designs.",who:"Synopsys, Cadence, Siemens EDA, Arm",where:"Mostly US."},
+ {id:"li",c:2,r:2,name:"Lithography",sub:"Netherlands, ASML",st:5,what:"Prints circuit patterns with light; EUV prints the finest.",who:"ASML (only EUV maker); Nikon, Canon",where:"Netherlands. ASML revenue $27.5B in 2025."},
+ {id:"de",c:2,r:3,name:"Deposition and etch",sub:"US, Japan",st:5,what:"Lays down and etches away thin layers, hundreds of times per chip.",who:"Applied Materials, Lam Research, Tokyo Electron",where:"US and Japan."},
+ {id:"in",c:2,r:4,name:"Inspection",sub:"US, KLA",st:5,what:"Measures and inspects wafers for defects.",who:"KLA, Hitachi High Tech",where:"US and Japan."},
+ {id:"cl",c:2,r:5,name:"Cleaning",sub:"Japan",st:5,what:"Cleans wafers between steps.",who:"Screen Holdings, Tokyo Electron, Lam Research",where:"Japan and US."},
+ {id:"ds",c:2,r:7,name:"Chip designers",sub:"US",st:1,what:"Design the GPU and hire a foundry to make it.",who:"NVIDIA (fiscal 2026 revenue $215.9B), AMD; Google, Amazon custom chips",where:"Designed in the US, made in Taiwan."},
+ {id:"ld",c:3,r:2,name:"Logic die",sub:"Taiwan, TSMC 72.5%",st:2,what:"The processor chip at the heart of the GPU.",who:"TSMC; Samsung Foundry; Intel Foundry",where:"TSMC held 72.5% of foundry revenue in Q2 2026."},
+ {id:"hb",c:3,r:4,name:"HBM memory",sub:"Korea, US",st:3,what:"Stacked memory beside the GPU die that feeds it data fast.",who:"SK hynix 50%, Samsung 33%, Micron 18% (Q2 2026)",where:"Korea, plus Micron plants in Asia and US."},
+ {id:"sb",c:3,r:6,name:"Package substrate",sub:"Japan, Taiwan",st:4,what:"Multilayer base the GPU package sits on.",who:"Ibiden, Shinko, Unimicron, Nan Ya PCB, Kinsus, AT&S",where:"Japan and Taiwan."},
+ {id:"cw",c:4,r:4,name:"Advanced packaging",sub:"Taiwan, TSMC CoWoS",st:4,what:"Joins logic dies and HBM on an interposer, then onto the substrate.",who:"TSMC; ASE, Amkor growing; Intel EMIB and Samsung as alternatives",where:"Mostly Taiwan. AI chips use about 90% of CoWoS capacity (Epoch AI)."},
+ {id:"gpu",c:5,r:4,name:"AI GPU",sub:"H200, MI325X, B200",st:1,what:"The finished GPU package, ready for a server.",who:"NVIDIA H200, B200; AMD MI325X",where:"Packaged in Taiwan, shipped to server makers."}
+];
+const E=[["si","wf"],["ne","gs"],["gg","gs",1],["w","gs"],["re","ch"],["re","tp"],["ta","tg"],["cu","tg"],
+ ["wf","ld"],["wf","hb"],["gs","ld"],["gs","hb"],["pr","ld"],["pr","hb"],["ch","ld"],["ch","hb"],["tg","ld"],["tg","hb"],
+ ["tp","li"],["tp","de"],["tp","in"],["tp","cl"],["abf","sb"],["eda","ds"],
+ ["li","ld"],["li","hb"],["de","ld"],["de","hb"],["in","ld"],["in","hb"],["cl","ld"],["cl","hb"],["ds","ld"],
+ ["ld","cw"],["hb","cw"],["sb","cw"],["cw","gpu"]];
+const byId=Object.fromEntries(N.map(n=>[n.id,n]));
+let DATA={rules:[],last_scan:null};
+const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const approved=()=>DATA.rules.filter(r=>r.review==="approved");
+const pending=()=>DATA.rules.filter(r=>r.review!=="approved");
+function rulesFor(id){return approved().filter(r=>(r.stages||[]).includes(id))}
+function tagsFor(id){return [...new Set(rulesFor(id).map(r=>(TYPE[r.type]||TYPE.other).tag))].filter(t=>t!=="none")}
+
+/* tabs */
+const tabs=[...document.querySelectorAll('[role=tab]')];
+function showTab(id){tabs.forEach(t=>{const on=t.id===id;t.setAttribute("aria-selected",on);document.getElementById(t.getAttribute("aria-controls")).hidden=!on});
+ try{localStorage.setItem("tab",id)}catch(e){}}
+tabs.forEach(t=>t.addEventListener("click",()=>showTab(t.id)));
+
+/* KPIs */
+function renderKpis(){const a=approved(),p=pending();const exposed=N.filter(n=>tagsFor(n.id).length).length;
+ const ls=DATA.last_scan?new Date(DATA.last_scan).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"Not run yet";
+ document.getElementById("kpis").innerHTML=`<div class="kpi"><b>${a.length}</b><span>Rules tracked</span></div>
+ <div class="kpi ${p.length?"warn":""}"><b>${p.length}</b><span>New items awaiting review</span></div>
+ <div class="kpi"><b>${exposed} of ${N.length}</b><span>Supply chain stages hit by a rule</span></div>
+ <div class="kpi"><b style="font-size:18px">${esc(ls)}</b><span>Last automatic scan</span></div>`}
+
+/* map */
+const NS="http://www.w3.org/2000/svg";const nodeEls={};let edgeEls=[];
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
+const pos=n=>({x:CX[n.c],y:TOP+n.r*ROW});
+function buildMap(){const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox",`0 0 1250 ${TOP+8*ROW+10}`);svg.setAttribute("width",1250);svg.setAttribute("role","img");
+ el("title",{},svg).textContent="GPU supply chain from raw materials to finished GPU";
+ COLS.forEach((c,i)=>{el("text",{x:CX[i]+4,y:24,class:"colh"},svg).textContent=c+(i<5?"  →":"")});
+ const eg=el("g",{},svg);
+ edgeEls=E.map(([a,b,ind])=>{const A=pos(byId[a]),B=pos(byId[b]);const x1=A.x+W,y1=A.y+H/2,x2=B.x,y2=B.y+H/2,mx=(x1+x2)/2;
+  return {a,b,p:el("path",{d:`M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`,class:"edge"+(ind?" ind":"")},eg)}});
+ N.forEach(n=>{const {x,y}=pos(n);const g=el("g",{class:"node",tabindex:"0",role:"button","aria-label":n.name},svg);
+  el("rect",{x,y,width:W,height:H,rx:6,class:"body"},g);
+  el("text",{x:x+12,y:y+22,class:"t"},g).textContent=n.name;
+  el("text",{x:x+12,y:y+41,class:"s"},g).textContent=n.sub;
+  el("g",{class:"tags"},g);
+  g.addEventListener("click",()=>selectNode(n.id));
+  g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();selectNode(n.id)}});
+  nodeEls[n.id]=g});
+ document.getElementById("canvas").appendChild(svg)}
+function paintTags(){N.forEach(n=>{const g=nodeEls[n.id].querySelector(".tags");g.innerHTML="";const {x,y}=pos(n);
+ tagsFor(n.id).forEach((t,i)=>el("rect",{x:x+W-14-i*11,y:y+6,width:8,height:8,rx:1.5,fill:`var(--${t})`},g))})}
+function walk(s,dir){const seen=new Set([s]),lit=new Set(),q=[s];while(q.length){const c=q.shift();edgeEls.forEach((e,i)=>{const f=dir>0?e.a:e.b,t=dir>0?e.b:e.a;if(f===c){lit.add(i);if(!seen.has(t)){seen.add(t);q.push(t)}}})}return {seen,lit}}
+let mstate={sel:"gpu",rule:""};
+function selectNode(id){mstate={sel:mstate.sel===id&&!mstate.rule?"":id,rule:""};renderMap()}
+document.querySelectorAll("#v-map .chip").forEach(c=>c.addEventListener("click",()=>{const r=c.dataset.rule;mstate={sel:"",rule:(!r||mstate.rule===r)?"":r};renderMap()}));
+function rulePills(rs){return rs.map(r=>{const t=TYPE[r.type]||TYPE.other;return `<span class="pill p-${t.tag}">${esc(t.label)}</span>`}).join(" ")}
+function renderMap(){document.querySelectorAll("#v-map .chip").forEach(c=>c.setAttribute("aria-pressed",String(!!mstate.rule&&c.dataset.rule===mstate.rule)));
+ Object.values(nodeEls).forEach(g=>{g.classList.remove("sel","dim");const b=g.querySelector("rect.body");b.style.stroke="";b.style.strokeWidth=""});edgeEls.forEach(e=>e.p.classList.remove("lit","dim"));
+ const P=document.getElementById("mpanel");
+ if(mstate.rule){const hit=N.filter(n=>tagsFor(n.id).includes(mstate.rule));N.forEach(n=>{const g=nodeEls[n.id];if(hit.includes(n)){g.querySelector("rect.body").style.stroke=`var(--${mstate.rule})`;g.querySelector("rect.body").style.strokeWidth="2.5"}else g.classList.add("dim")});
+  edgeEls.forEach(e=>e.p.classList.add("dim"));
+  P.innerHTML=`<span class="eyebrow">Rule exposure</span><h3>${hit.length} stages hit</h3><p>${esc(hit.map(n=>n.name).join(", "))||"None"}. Select a stage for detail.</p>`;return}
+ if(!mstate.sel){P.innerHTML=`<span class="eyebrow">How to use</span><h3>Select a stage</h3><p>See what feeds it, what it feeds, who makes it, and which tracked rules hit it.</p>`;return}
+ const up=walk(mstate.sel,-1),down=walk(mstate.sel,1),on=new Set([...up.seen,...down.seen]);
+ N.forEach(n=>{if(!on.has(n.id))nodeEls[n.id].classList.add("dim")});nodeEls[mstate.sel].classList.add("sel");
+ edgeEls.forEach((e,i)=>e.p.classList.add(up.lit.has(i)||down.lit.has(i)?"lit":"dim"));
+ const n=byId[mstate.sel],rs=rulesFor(n.id);
+ const feeds=E.filter(e=>e[1]===n.id).map(e=>byId[e[0]].name).join(", ")||"None in this map";
+ const goes=E.filter(e=>e[0]===n.id).map(e=>byId[e[1]].name).join(", ")||"None in this map";
+ P.innerHTML=`<div class="row" style="justify-content:space-between"><div><span class="eyebrow">${COLS[n.c]} · review step ${n.st}</span><h3>${esc(n.name)}</h3></div><div>${rulePills(rs)||'<span class="pill p-none">No tracked rule</span>'}</div></div>
+ <div class="pgrid"><div><span class="k">What it is</span><p>${esc(n.what)}</p><span class="k">Connections</span><p class="note">Fed by: ${esc(feeds)}<br>Feeds: ${esc(goes)}</p></div>
+ <div><span class="k">Who makes it</span><p>${esc(n.who)}</p><span class="k">Where</span><p>${esc(n.where)}</p></div>
+ <div><span class="k">Tracked rules</span>${rs.length?rs.map(r=>`<p><a href="#" data-goto="${esc(r.id)}">${esc(r.title)}</a> <span class="note">· ${esc(STATUS[r.status]||r.status)}</span></p>`).join(""):'<p class="note">None yet.</p>'}</div></div>`;
+ P.querySelectorAll("[data-goto]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();showTab("t-rules");const t=document.getElementById("r-"+a.dataset.goto);if(t){t.scrollIntoView({behavior:"smooth",block:"center"});t.focus()}}))}
+
+/* rules */
+let rfilter="all";
+document.querySelectorAll(".rf").forEach(c=>c.addEventListener("click",()=>{rfilter=c.dataset.f;document.querySelectorAll(".rf").forEach(x=>x.setAttribute("aria-pressed",String(x===c)));renderRules()}));
+function ruleCard(r){const t=TYPE[r.type]||TYPE.other;const pend=r.review!=="approved";const me=r.model_effect||{};
+ const canModel=me.input&&me.input!=="none"&&me.value!=null;
+ const conf={high:"p-ok",medium:"p-none",low:"p-pend"}[r.confidence]||"p-none";
+ return `<article class="rule ${pend?"pending":""}" id="r-${esc(r.id)}" tabindex="-1" style="--c:var(--${t.tag==="none"?"line":t.tag})">
+ <div class="rule-top"><h3>${esc(r.title)}</h3><div class="row"><span class="pill p-${t.tag}">${esc(t.label)}</span><span class="pill p-none">${esc(STATUS[r.status]||r.status||"")}</span>${pend?'<span class="pill p-pend">Needs review</span>':""}</div></div>
+ <div class="meta"><span>${esc(r.jurisdiction||"")}</span><span>Published ${esc(r.date||"unknown")}</span>${r.effective?`<span>Effective ${esc(r.effective)}</span>`:""}<span>Countries: ${esc((r.countries||[]).join(", ")||"unclear")}</span></div>
+ <p>${esc(r.summary)}</p>
+ <div class="stages"><span class="k" style="align-self:center">Hits:</span>${(r.stages||[]).map(s=>`<span class="stg">${esc(byId[s]?byId[s].name:s)}</span>`).join("")||'<span class="note">No stage tagged</span>'}</div>
+ ${me.note?`<p class="note">Cost model: ${esc(me.note)}</p>`:""}
+ <div class="row" style="justify-content:space-between"><span class="note">Source: ${r.source_url?`<a href="${esc(r.source_url)}" target="_blank" rel="noopener">${esc(r.source_name||"link")}</a>`:esc(r.source_name||"to add")} · <span class="pill ${conf}">${esc(r.confidence||"unrated")} confidence</span>${r.official===false?' · news or secondary source':""}</span>
+ ${canModel&&!pend?`<button class="btn" data-model="${esc(r.id)}">Model this rule</button>`:""}</div></article>`}
+function renderRules(){const f=r=>rfilter==="all"||r.type===rfilter;
+ const ap=approved().filter(f).sort((a,b)=>(b.date||"").localeCompare(a.date||"")),pe=pending().filter(f).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+ document.getElementById("approved").innerHTML=ap.map(ruleCard).join("")||'<p class="note">No rules in this filter.</p>';
+ document.getElementById("pendingWrap").hidden=!pe.length;document.getElementById("pending").innerHTML=pe.map(ruleCard).join("");
+ document.querySelectorAll("[data-model]").forEach(b=>b.addEventListener("click",()=>modelRule(DATA.rules.find(r=>r.id===b.dataset.model))))}
+
+/* cost model */
+const PRESET={H200:{price:30000,covered:true},B200:{price:35000,covered:false},MI325X:{price:20000,covered:true}};
+const $=id=>document.getElementById(id);
+const SH=["hbm","logic","pack","sub","other"],DEF_SH={hbm:50,logic:18,pack:17,sub:5,other:10},MIN_EXPO=0.03;
+function setDefaults(){$("gpu").value="H200";$("price").value=PRESET.H200.price;$("margin").value=71;SH.forEach(k=>$("s-"+k).value=DEF_SH[k]);
+ $("tariff").value=25;$("applies").checked=true;["x-hbm","x-logic","x-pack","x-sub","x-min"].forEach(k=>$(k).value=0);$("pass").value=100}
+const money=v=>(v<0?"−":"")+"$"+Math.abs(Math.round(v)).toLocaleString("en-US");
+const pctf=v=>(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(1)+"%";
+function calc(){const price=+$("price").value||0,m=+$("margin").value/100,cost=price*(1-m);
+ const sh={};let tot=0;SH.forEach(k=>{sh[k]=Math.max(0,+$("s-"+k).value||0);tot+=sh[k]});
+ const w=$("shareWarn");if(Math.abs(tot-100)>0.5){w.hidden=false;w.textContent=`Cost shares add to ${tot}%. They are scaled to 100% in the results.`}else w.hidden=true;
+ const norm=tot>0?100/tot:0;const comp={};SH.forEach(k=>comp[k]=cost*sh[k]*norm/100);
+ const x={hbm:+$("x-hbm").value,logic:+$("x-logic").value,pack:+$("x-pack").value,sub:+$("x-sub").value};const xm=+$("x-min").value,pass=+$("pass").value/100;
+ const d={hbm:comp.hbm*x.hbm/100,logic:comp.logic*x.logic/100,pack:comp.pack*x.pack/100,sub:comp.sub*x.sub/100,min:(comp.hbm+comp.logic)*MIN_EXPO*xm/100};
+ const dCost=Object.values(d).reduce((a,b)=>a+b,0);const pre=price+dCost*pass;const tariff=$("applies").checked?pre*(+$("tariff").value)/100:0;
+ const total=pre+tariff,change=total-price;
+ return {price,cost,comp,d,pass,tariff,total,change}}
+function render(){const r=calc();
+ $("o-margin").textContent=$("margin").value+"%";$("o-tariff").textContent=$("tariff").value+"%";$("o-pass").textContent=$("pass").value+"%";
+ [["x-hbm"],["x-logic"],["x-pack"],["x-sub"],["x-min"]].forEach(([k])=>$("o-"+k).textContent=pctf(+$(k).value));
+ const pc=r.price?r.change/r.price*100:0;
+ $("big").innerHTML=`<div><b>${money(r.total)}</b><span>New cost to buyer per GPU (was ${money(r.price)})</span></div>
+ <div><b>${pctf(pc)}</b><span>Change per GPU (${money(r.change)})</span></div>
+ <div><b>${money(r.change*8)}</b><span>Change per 8 GPU server</span></div>
+ <div><b>${money(r.change*72)}</b><span>Change per 72 GPU rack</span></div>`;
+ const rows=[["HBM",r.d.hbm*r.pass],["Logic die",r.d.logic*r.pass],["Packaging",r.d.pack*r.pass],["Substrate, ABF",r.d.sub*r.pass],["Critical minerals",r.d.min*r.pass],["Tariff",r.tariff,"tf"]];
+ const mx=Math.max(1,...rows.map(x=>Math.abs(x[1])));
+ $("bars").innerHTML=rows.map(([l,v,c])=>`<div class="bar"><span>${l}</span><span class="t"><i class="${c||""}" style="width:${Math.abs(v)/mx*100}%"></i></span><span class="v">${money(v)}</span></div>`).join("");
+ const base=[["HBM",r.comp.hbm],["Logic die",r.comp.logic],["Packaging",r.comp.pack],["Substrate, ABF",r.comp.sub],["Test, other",r.comp.other]];const bm=Math.max(1,...base.map(x=>x[1]));
+ $("basebars").innerHTML=base.map(([l,v])=>`<div class="bar"><span>${l}</span><span class="t"><i style="width:${v/bm*100}%"></i></span><span class="v">${money(v)}</span></div>`).join("")+`<p class="note">Total manufacturing cost about ${money(r.cost)}; the rest of the price is the maker's margin.</p>`}
+document.querySelectorAll("#v-cost input,#v-cost select").forEach(i=>i.addEventListener("input",()=>{if(i.id==="gpu"){const p=PRESET[i.value];$("price").value=p.price;$("applies").checked=p.covered}$("scenarioLabel").textContent="Custom scenario.";render()}));
+$("reset").addEventListener("click",()=>{["x-hbm","x-logic","x-pack","x-sub","x-min","tariff"].forEach(k=>$(k).value=0);$("scenarioLabel").textContent="Baseline: no changes.";render()});
+function modelRule(r){if(!r)return;const me=r.model_effect||{};
+ ["x-hbm","x-logic","x-pack","x-sub","x-min","tariff"].forEach(k=>$(k).value=0);
+ if(me.input==="tariff"){$("tariff").value=me.value;$("gpu").value="H200";$("price").value=PRESET.H200.price;$("applies").checked=true}
+ else if(me.input==="mineral")$("x-min").value=me.value;
+ else if(["hbm","logic","pack","sub"].includes(me.input))$("x-"+me.input).value=me.value;
+ $("scenarioLabel").textContent="Scenario from rule: "+r.title+". "+(me.note||"");render();showTab("t-cost")}
+
+/* boot */
+function boot(d){DATA=d&&d.rules?d:{rules:[]};renderKpis();paintTags();renderMap();renderRules()}
+buildMap();setDefaults();render();
+fetch("data/rules.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(boot).catch(()=>boot(SEED));
+try{const t=localStorage.getItem("tab");if(t&&document.getElementById(t))showTab(t)}catch(e){}
+</script>
+
+</body>
+</html>
