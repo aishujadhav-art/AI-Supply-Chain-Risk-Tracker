@@ -90,8 +90,9 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(-
 .btn{border:1px solid var(--accent);background:var(--accent);color:var(--surface);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13.5px;font-weight:500}
 .btn.ghost{background:transparent;color:var(--accent)}
 a.btn{text-decoration:none;display:inline-block}
-.review{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface2);border-radius:6px;padding:8px 10px}
+.review{display:grid;gap:8px;background:var(--surface2);border-radius:6px;padding:10px 12px}
 .review code{background:var(--surface);user-select:all}
+.btn.danger{background:var(--cn);border-color:var(--cn);color:var(--surface)}
 /* cost */
 .cost{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
 @media (max-width:860px){.cost{grid-template-columns:1fr}}
@@ -161,7 +162,7 @@ footer{margin-top:32px;padding-top:12px;border-top:1px solid var(--line);font-si
   </div>
   <div id="pendingWrap" hidden>
     <h2>New from the scanner, needs review</h2>
-    <p class="note">Found and tagged automatically. They do not change the map or the cost model until approved. To decide: copy the item id, open "Approve or reject on GitHub", press Run workflow, paste the id, and choose approve or reject.</p>
+    <p class="note">Found and tagged by the daily scan, with the AI's suggestion. Nothing here changes the map or cost model until you approve it. Press Approve or Reject, then press "Submit new issue" on the GitHub page that opens. The dashboard updates in about two minutes.</p>
     <div class="rules" id="pending" style="margin-top:10px"></div>
   </div>
   <h2>Tracked rules</h2>
@@ -369,7 +370,14 @@ function ruleCard(r){const t=TYPE[r.type]||TYPE.other;const pend=r.review!=="app
  ${me.note?`<p class="note">Cost model: ${esc(me.note)}</p>`:""}
  <div class="row" style="justify-content:space-between"><span class="note">Source: ${r.source_url?`<a href="${esc(r.source_url)}" target="_blank" rel="noopener">${esc(r.source_name||"link")}</a>`:esc(r.source_name||"to add")} · <span class="pill ${conf}">${esc(r.confidence||"unrated")} confidence</span>${r.official===false?' · news or secondary source':""}</span>
  ${canModel&&!pend?`<button class="btn" data-model="${esc(r.id)}">Model this rule</button>`:""}</div>
- ${pend?`<div class="review"><span class="k">Item id</span><code class="rid">${esc(r.id)}</code><button class="btn ghost" data-copy="${esc(r.id)}">Copy id</button>${GH?`<a class="btn" href="${GH}/actions/workflows/review.yml" target="_blank" rel="noopener">Approve or reject on GitHub</a>`:'<span class="note">Approve or reject in your repository: Actions, Review an item.</span>'}</div>`:""}</article>`}
+ ${pend?reviewBox(r):""}</article>`}
+function reviewBox(r){const rec=r.ai_recommendation||"unsure";
+ const lab={approve:"AI suggests: approve",reject:"AI suggests: reject"}[rec]||"No AI suggestion";
+ const cls={approve:"p-ok",reject:"p-cn"}[rec]||"p-none";
+ const link=d=>`${GH}/issues/new?title=${encodeURIComponent(d+" "+r.id)}&body=${encodeURIComponent("Press Submit new issue to "+d+" this item:\n"+r.title+"\n\nThe tracker updates itself and closes this request in about a minute.")}`;
+ return `<div class="review"><span class="k">AI review</span>
+ <p><span class="pill ${cls}">${lab}</span> ${r.ai_reason?esc(r.ai_reason):'<span class="note">No AI comment: this item was found before AI comments were added, or without the AI.</span>'}</p>
+ <div class="row">${GH?`<a class="btn" href="${link("approve")}" target="_blank" rel="noopener">Approve</a><a class="btn danger" href="${link("reject")}" target="_blank" rel="noopener">Reject</a>`:'<span class="note">The Approve and Reject buttons work on your GitHub Pages site.</span>'}<span class="note">Item id: <code class="rid">${esc(r.id)}</code></span></div></div>`}
 const GH=(()=>{const h=location.hostname;if(!h.endsWith(".github.io"))return null;const owner=h.slice(0,-".github.io".length);const repo=location.pathname.split("/").filter(Boolean)[0];return repo?`https://github.com/${owner}/${repo}`:null})();
 function copyId(btn){const id=btn.dataset.copy;const done=()=>{btn.textContent="Copied";setTimeout(()=>btn.textContent="Copy id",1500)};
  const fallback=()=>{const c=btn.parentElement.querySelector(".rid");const s=getSelection(),rg=document.createRange();rg.selectNodeContents(c);s.removeAllRanges();s.addRange(rg);btn.textContent="Selected, press Ctrl+C"};
@@ -423,7 +431,8 @@ function modelRule(r){if(!r)return;const me=r.model_effect||{};
 /* boot */
 function boot(d){DATA=d&&d.rules?d:{rules:[]};renderKpis();paintTags();renderMap();renderRules()}
 buildMap();setDefaults();render();
-fetch("data/rules.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(boot).catch(()=>boot(SEED));
+const BASE=(location.pathname.endsWith("/")||/\.[a-z]+$/i.test(location.pathname))?location.href:location.origin+location.pathname+"/";
+fetch(new URL("data/rules.json",BASE),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(boot).catch(()=>boot(SEED));
 try{const t=localStorage.getItem("tab");if(t&&document.getElementById(t))showTab(t)}catch(e){}
 </script>
 
