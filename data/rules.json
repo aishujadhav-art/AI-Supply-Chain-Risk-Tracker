@@ -1,6 +1,6 @@
 {
-  "last_scan": "2026-10-12T18:33:27+00:00",
-  "last_scan_note": "Checked 40 new items with claude:claude-sonnet-5-5; added 2 for review.",
+  "last_scan": "2026-10-13T11:31:15+00:00",
+  "last_scan_note": "Checked 24 new items with claude:claude-sonnet-5-5; added 2 for review.",
   "rules": [
     {
       "id": "us-232-semis-2026",
@@ -282,6 +282,58 @@
         "value": null,
         "note": "Keyword tagger: check the source before modeling."
       }
+    },
+    {
+      "id": "NEWS-6ae9ea2f94d5",
+      "title": "China's October Industrial Doctrine Formalizes Rare Earth Leverage: EU Secured Managed Access - Tech Times",
+      "jurisdiction": "Unclear",
+      "type": "mineral_control",
+      "status": "unknown",
+      "review": "pending",
+      "date": "2026-10-13",
+      "effective": null,
+      "stages": [
+        "re"
+      ],
+      "countries": [],
+      "summary": "China's October Industrial Doctrine Formalizes Rare Earth Leverage: EU Secured Managed Access &nbsp;&nbsp; Tech Times",
+      "source_name": "Tech Times",
+      "source_url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxQNmZjbkVvM3JXVldNOXYxLXRKbldES1RpQzlTRE9tX3dzQzc3ZllPZEVfM1dWNzc3bjFiWmxGZ1NZTGZ3SHh5RjFoUDhuSGdTTC1wcl9kMVhNSnliaFBLOXNUbnEwdXQ5N2ZWdW5vNEp4ZFhJZThFS2lxZ0dXM2MzS3JhUGY3bWp5bUpiNnpTZUV3cFhtazZ3T3V2bTFudUZMYjY0N3JsRm9pcWtZVXhNeUlJbDM5cVBGb29wMDEtclp0RTNrOXRyUU1welRlT09qRXNWVEVwQUU4Tnd3MXlz?oc=5",
+      "confidence": "low",
+      "official": false,
+      "tagged_by": "keywords",
+      "found_on": "2026-10-13",
+      "model_effect": {
+        "input": "none",
+        "value": null,
+        "note": "Keyword tagger: check the source before modeling."
+      }
+    },
+    {
+      "id": "NEWS-962d50cc9289",
+      "title": "US and China extend their rare earth truce by just two months to January - Startup Fortune",
+      "jurisdiction": "Unclear",
+      "type": "mineral_control",
+      "status": "unknown",
+      "review": "pending",
+      "date": "2026-10-07",
+      "effective": null,
+      "stages": [
+        "re"
+      ],
+      "countries": [],
+      "summary": "US and China extend their rare earth truce by just two months to January &nbsp;&nbsp; Startup Fortune",
+      "source_name": "Startup Fortune",
+      "source_url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPS0V1bTdIRnJxNEVCcVFmSEVZZ29ZS3lPUjNKTERyVTFiaVBkNTI3S0F4dVp6ZjBvUFVqeUc0bFdHS1JyRzR1eTZYaTNhbXROOHJUN2ZxZ3dXNmQyQWVqSV9FWFptT1laWnR0MEZiS3QzYkRQSkdUNm9XYjFkQzdWZ1NKdXUzcmxfdzl1anJZMVRfVUZ4NW5nY1M4Q2lJZTAxWnc?oc=5",
+      "confidence": "low",
+      "official": false,
+      "tagged_by": "keywords",
+      "found_on": "2026-10-13",
+      "model_effect": {
+        "input": "none",
+        "value": null,
+        "note": "Keyword tagger: check the source before modeling."
+      }
     }
   ],
   "dismissed": [
@@ -322,6 +374,28 @@
     "NEWS-239077caa495",
     "NEWS-566e49789d95",
     "NEWS-d827a9ad4027",
-    "NEWS-5ad47ad0ba44"
+    "NEWS-5ad47ad0ba44",
+    "NEWS-4cb3e7208e7e",
+    "NEWS-4aa4a087f4c7",
+    "NEWS-ad4eecdb63e0",
+    "NEWS-3ed316f3f4fe",
+    "NEWS-8a5742b37fbc",
+    "NEWS-ac0527e1a924",
+    "NEWS-240796d6ba25",
+    "NEWS-d1556b251067",
+    "NEWS-da8af6323d68",
+    "NEWS-87a2bd3e5e6a",
+    "NEWS-50dfa725dd9f",
+    "NEWS-933defc3b24c",
+    "NEWS-bca08f19f8f6",
+    "NEWS-198738f91bda",
+    "NEWS-c3680199318e",
+    "NEWS-508d0685bbe3",
+    "NEWS-95b37437eb00",
+    "NEWS-4e6896c0b969",
+    "NEWS-1bc087bf93c9",
+    "NEWS-d070b3bebe2e",
+    "NEWS-d1279c752708",
+    "NEWS-f12eef6df87f"
   ]
 }
